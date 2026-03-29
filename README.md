@@ -4,19 +4,19 @@
 This application provides a centralized platform for gym members and trainers to connect and manage fitness classes more efficiently. Traditional gym scheduling is often handled through paper sign-up sheets or manual messaging, making it hard to track availability or manage waitlists. This project aims to solve that problem by providing a dedicated website where anyone can browse upcoming classes, enroll, and manage their participation — while giving trainers full control over class creation and attendance.
 
 # Features
-# 1. Browsing Classes
-- The Classes page lists all available classes for the current week
-Anyone with an account can browse all classes
-- Each card displays the class name, level, trainer, schedule, term, and current enrollment status
-- Members and Trainers can switch to a Calendar view to see their full monthly schedule
+# 1. User Roles
+- Member role can browse, enroll in, and leave classes
+- Trainer role can create, edit, and delete classes; manages attendance and member lists
 # 2. Registration and Login
 - Browsing is available after logging in
 - New users must Register with a username, email, password, and role before accessing any features
 - After registration, you are redirected to the Sign In page to log in with your credentials
 Once logged in, your profile can be accessed by clicking your username in the top-right header
-# 3. User Roles
-- Member role can browse, enroll in, and leave classes
-- Trainer role can create, edit, and delete classes; manages attendance and member lists
+# 3. Browsing Classes
+- The Classes page lists all available classes for the current week
+Anyone with an account can browse all classes
+- Each card displays the class name, level, trainer, schedule, term, and current enrollment status
+- Members and Trainers can switch to a Calendar view to see their full monthly schedule
 # 4. Trainer creating classes 
 - Trainers see a + Create Class button on the Classes page
 - When creating a class, trainers can set the name, date, time, level, capacity, and description
