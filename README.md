@@ -18,7 +18,7 @@ Anyone with an account can browse all classes
 - Each card displays the class name, level, trainer, schedule, term, and current enrollment status
 - Members and Trainers can switch to a Calendar view to see their full monthly schedule
 # 4. Trainer creating classes 
-- Trainers see a + Create Class button on the Classes page
+- Trainers see a plus Create Class button on the Classes page
 - When creating a class, trainers can set the name, date, time, level, capacity, and description
 - Classes can be set to repeat on selected weekdays for up to 4 weeks automatically
 - After creation, the new class appears immediately in the class list
