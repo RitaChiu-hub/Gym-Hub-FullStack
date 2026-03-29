@@ -1,0 +1,26 @@
+{
+  "name": "gym-app-fullstack",
+  "version": "1.0.0",
+  "description": "This application provides a centralized platform for gym members and trainers to connect and manage fitness classes more efficiently. Traditional gym scheduling is often handled through paper sign-up sheets or manual messaging, making it hard to track availability or manage waitlists. This project aims to solve that problem by providing a dedicated website where anyone can browse upcoming classes, enroll, and manage their participation — while giving trainers full control over class creation and attendance.",
+  "main": "index.js",
+  "scripts": {
+  "start": "node server/server.js",
+  "dev": "nodemon server/server.js",
+  "client": "cd components && npm run dev"
+},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.20.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
