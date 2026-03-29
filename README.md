@@ -40,15 +40,29 @@ When a member leaves an enrolled spot, the first person on the waitlist is autom
  
 # Installation & Setup
 ```bash
-# Install dependencies
+
+# 1. Install backend dependencies (root)
 npm install
 
-# Start dev server
+# 2. Install frontend dependencies
+cd components
+npm install
+
+# 3. Go back to root and start backend
+cd ..
+npm run dev
+
+# 4. In a new terminal, start frontend
+cd components
 npm run dev
 ```
-
+- Backend runs on: http://localhost:3000
+- Frontend runs on: http://localhost:5173
 # Tech Stack
-- React (Vite)
+- Frontend : React (Vite)
+- Backend : Node.js, Express
+- Database : PostgreSQL
+- Auth : JWT (JSON Web Token)
 
 # Sources and Licensing
 Pictures Donload from https://unsplash.com/
