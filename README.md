@@ -39,32 +39,65 @@ When a member leaves an enrolled spot, the first person on the waitlist is autom
 - Members can view their Class History: Upcoming, Past, and Attended classes
 
 # Project Structure
-gym-app-fullstack/
-├── components/              ← Frontend React
-│   ├── src/
-│   │   ├── context/
-│   │   ├── pages/
-│   │   └── component/
-│   ├── index.html
-│   ├── vite.config.js
-│   └── package.json
-│
-├── server/                  ← Backend Express
-│   ├── db/
-│   │   └── index.js        
-│   ├── routes/
-│   │   ├── auth.js          
-│   │   └── classes.js      
-│   ├── controllers/
-│   │   ├── authController.js    
-│   │   └── classesController.js
-│   ├── middleware/
-│   │   └── auth.js          
-│   └── server.js           
-│
-├── .env                     
-├── package.json             
-└── README.md
+
+.
+├── components
+│   ├── images
+│   │   ├── equipment.jpg
+│   │   ├── nutrition.jpg
+│   │   └── trainers.jpg
+│   ├── public
+│   │   ├── favicon.svg
+│   │   └── icons.svg
+│   ├── src
+│   │   ├── assets
+│   │   │   ├── hero.png
+│   │   │   ├── react.svg
+│   │   │   └── vite.svg
+│   │   ├── component
+│   │   │   ├── Button.jsx
+│   │   │   ├── Footer.jsx
+│   │   │   ├── Header.jsx
+│   │   │   ├── Modal.jsx
+│   │   │   └── Nav.jsx
+│   │   ├── context
+│   │   │   ├── AuthContext.jsx
+│   │   │   └── ClassesContext.jsx
+│   │   ├── pages
+│   │   │   ├── AdminPage.jsx
+│   │   │   ├── CardsPage.jsx
+│   │   │   ├── LoginPage.jsx
+│   │   │   ├── PanelsPage.jsx
+│   │   │   ├── ProfilePage.jsx
+│   │   │   └── TextPage.jsx
+│   │   ├── App.css
+│   │   ├── App.jsx
+│   │   ├── index.css
+│   │   └── main.jsx
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── licenses.txt
+│   ├── package-lock.json
+│   ├── package.json
+│   └── vite.config.js
+├── server
+│   ├── controllers
+│   │   ├── authController.js
+│   │   ├── classesController.js
+│   │   └── messagesController.js
+│   ├── db
+│   │   └── index.js
+│   ├── middleware
+│   │   └── auth.js
+│   ├── routes
+│   │   ├── auth.js
+│   │   ├── classes.js
+│   │   └── messages.js
+│   └── server.js
+├── package-lock.json
+└── package.json
+
+
 # Installation & Setup
 ```bash
 
