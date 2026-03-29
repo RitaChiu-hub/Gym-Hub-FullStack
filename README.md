@@ -38,8 +38,35 @@ When a member leaves an enrolled spot, the first person on the waitlist is autom
 - Change password with current password verification
 - Members can view their Class History: Upcoming, Past, and Attended classes
 
-# Project Structure
+# Installation & Setup
+```bash
 
+# 1. Install backend dependencies (root)
+npm install
+
+# 2. Install frontend dependencies
+cd components
+npm install
+
+# 3. Go back to root and start backend
+cd ..
+npm run dev
+
+# 4. In a new terminal, start frontend
+cd components
+npm run dev
+```
+- Backend runs on: http://localhost:3000
+- Frontend runs on: http://localhost:5173
+  
+# Tech Stack
+- Frontend : React (Vite)
+- Backend : Node.js, Express
+- Database : PostgreSQL
+- Auth : JWT (JSON Web Token)
+
+# Project Structure
+```
 .
 ├── components
 │   ├── images
@@ -96,34 +123,7 @@ When a member leaves an enrolled spot, the first person on the waitlist is autom
 │   └── server.js
 ├── package-lock.json
 └── package.json
-
-
-# Installation & Setup
-```bash
-
-# 1. Install backend dependencies (root)
-npm install
-
-# 2. Install frontend dependencies
-cd components
-npm install
-
-# 3. Go back to root and start backend
-cd ..
-npm run dev
-
-# 4. In a new terminal, start frontend
-cd components
-npm run dev
 ```
-- Backend runs on: http://localhost:3000
-- Frontend runs on: http://localhost:5173
-  
-# Tech Stack
-- Frontend : React (Vite)
-- Backend : Node.js, Express
-- Database : PostgreSQL
-- Auth : JWT (JSON Web Token)
 
 # Sources and Licensing
 Pictures Donload from https://unsplash.com/
