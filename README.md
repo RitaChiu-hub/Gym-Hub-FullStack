@@ -37,6 +37,11 @@ When a member leaves an enrolled spot, the first person on the waitlist is autom
 - Edit email inline without leaving the page
 - Change password with current password verification
 - Members can view their Class History: Upcoming, Past, and Attended classes
+# 8. Contact & Admin Dashboard
+- Any visitor can send a message to the gym via the Contact Us form
+- Messages are stored in the database and delivered to the admin in real time
+- Admins access the dashboard from their Profile Page → Manage Dashboard
+- Admin can filter messages by All / Unread / Read, mark messages as read/unread, and delete them
 
 # Installation & Setup
 ```bash
