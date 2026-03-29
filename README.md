@@ -37,7 +37,34 @@ When a member leaves an enrolled spot, the first person on the waitlist is autom
 - Edit email inline without leaving the page
 - Change password with current password verification
 - Members can view their Class History: Upcoming, Past, and Attended classes
- 
+
+# Project Structure
+gym-app-fullstack/
+├── components/              ← Frontend React
+│   ├── src/
+│   │   ├── context/
+│   │   ├── pages/
+│   │   └── component/
+│   ├── index.html
+│   ├── vite.config.js
+│   └── package.json
+│
+├── server/                  ← Backend Express
+│   ├── db/
+│   │   └── index.js        
+│   ├── routes/
+│   │   ├── auth.js          
+│   │   └── classes.js      
+│   ├── controllers/
+│   │   ├── authController.js    
+│   │   └── classesController.js
+│   ├── middleware/
+│   │   └── auth.js          
+│   └── server.js           
+│
+├── .env                     
+├── package.json             
+└── README.md
 # Installation & Setup
 ```bash
 
@@ -58,6 +85,7 @@ npm run dev
 ```
 - Backend runs on: http://localhost:3000
 - Frontend runs on: http://localhost:5173
+  
 # Tech Stack
 - Frontend : React (Vite)
 - Backend : Node.js, Express
