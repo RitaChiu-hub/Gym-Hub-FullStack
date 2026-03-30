@@ -20,7 +20,7 @@ function roleLabel(role) {
   return "Member";
 }
 
-/* ── Class History ── */
+/* ── Member Class History ── */
 function ClassHistory() {
   const { classes } = useClasses();
   const [tab, setTab] = useState("upcoming");
@@ -70,6 +70,62 @@ function ClassHistory() {
                 {c.userStatus === "waitlist"
                   ? <span className="waitlist-label">⏳ Waitlist</span>
                   : <span className="enrolled-label">✓ Enrolled</span>}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+/* ── Trainer Class List ── */
+function TrainerClasses() {
+  const { classes } = useClasses();
+  const { user } = useAuth();
+  const [tab, setTab] = useState("upcoming");
+
+  const todayISO = new Date().toISOString().split("T")[0];
+
+  const myClasses = classes.filter(c =>
+    c.trainer_id === user.id || c.trainer === user.username
+  );
+  const upcoming = myClasses.filter(c => !c.date || c.date >= todayISO).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  const past     = myClasses.filter(c => c.date && c.date < todayISO).sort((a,b)=>b.date.localeCompare(a.date));
+
+  const tabs = [
+    { key:"upcoming", label:`Upcoming (${upcoming.length})` },
+    { key:"past",     label:`Past (${past.length})` },
+  ];
+  const listFor = { upcoming, past };
+  const emptyMsg = {
+    upcoming: "No upcoming classes.",
+    past:     "No past classes yet.",
+  };
+
+  return (
+    <section className="profile-section">
+      <h3 className="profile-section-title">My Classes</h3>
+      <div className="history-tabs">
+        {tabs.map(t => (
+          <button key={t.key} className={`history-tab ${tab===t.key?"history-tab--active":""}`} onClick={()=>setTab(t.key)}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+      {listFor[tab].length === 0 ? (
+        <p className="members-empty">{emptyMsg[tab]}</p>
+      ) : (
+        <ul className="history-list">
+          {listFor[tab].map(c => (
+            <li key={c.id} className="history-item">
+              <div className="history-item-top">
+                <span className="history-item-title">{c.title}</span>
+                <LevelBadge level={c.level} />
+              </div>
+              <span className="history-item-schedule">{c.schedule}</span>
+              <div className="history-item-status">
+                <span className="enrolled-label">👟 {c.enrolled ?? 0} / {c.capacity ?? "∞"} enrolled</span>
               </div>
             </li>
           ))}
@@ -320,8 +376,9 @@ function ProfilePage() {
       {/* ✅ 新增：Admin Dashboard 卡片（只有 admin 看得到）*/}
       {user.role === "admin" && <AdminDashboardCard token={token} />}
 
-      {/* Class History (members only) */}
-      {user.role === "member" && <ClassHistory />}
+      {/* Class History */}
+      {user.role === "member"  && <ClassHistory />}
+      {user.role === "trainer" && <TrainerClasses />}
     </article>
   );
 }

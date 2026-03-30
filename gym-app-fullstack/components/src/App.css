@@ -716,3 +716,9 @@ main { flex: 1; max-width: 960px; width: 100%; margin: 0 auto; padding: 2.5rem 1
 .panels-page, .text-page, .cards-page, .profile-page {
   animation: pageIn 0.35s ease both;
 }
+
+/* ── Member badge fix on white background ── */
+.user-badge--profile.user-badge--member {
+  background-color: #e0e7ef;
+  color: #374151;
+}
