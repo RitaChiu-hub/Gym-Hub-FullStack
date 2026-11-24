@@ -4,10 +4,11 @@
   "description": "This application provides a centralized platform for gym members and trainers to connect and manage fitness classes more efficiently. Traditional gym scheduling is often handled through paper sign-up sheets or manual messaging, making it hard to track availability or manage waitlists. This project aims to solve that problem by providing a dedicated website where anyone can browse upcoming classes, enroll, and manage their participation — while giving trainers full control over class creation and attendance.",
   "main": "index.js",
   "scripts": {
-  "start": "node server/server.js",
-  "dev": "nodemon server/server.js",
-  "client": "cd components && npm run dev"
-},
+    "start": "node server/server.js",
+    "dev": "nodemon server/server.js",
+    "client": "cd components && npm run dev",
+    "test": "jest"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -21,6 +22,7 @@
     "pg": "^8.20.0"
   },
   "devDependencies": {
+    "jest": "^30.5.2",
     "nodemon": "^3.1.14"
   }
 }

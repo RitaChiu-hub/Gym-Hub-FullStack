@@ -1,4 +1,5 @@
 const pool = require("../db");
+const { getEnrollmentStatus } = require("../utils/enrollment");
 
 /* ── Get all classes ── */
 async function getAllClasses(req, res) {
@@ -111,7 +112,7 @@ async function enrollClass(req, res) {
       [classId]
     );
     const count  = parseInt(enrolled.rows[0].count);
-    const status = count < cls.rows[0].capacity ? "enrolled" : "waitlist";
+    const status = getEnrollmentStatus(count, cls.rows[0].capacity);
 
     await pool.query(
       "INSERT INTO enrollments (user_id, class_id, status) VALUES ($1, $2, $3)",
