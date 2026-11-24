@@ -4,14 +4,10 @@ const pool   = require("../db");
 
 /* ── Register ── */
 async function register(req, res) {
-  const { username, email, password, role } = req.body;
+  const { username, email, password } = req.body;
 
-  if (!username || !email || !password || !role) {
+  if (!username || !email || !password ) {
     return res.status(400).json({ error: "All fields are required" });
-  }
-
-  if (!["member", "trainer"].includes(role)) {
-    return res.status(400).json({ error: "Role must be member or trainer" });
   }
 
   try {
@@ -31,7 +27,7 @@ async function register(req, res) {
       `INSERT INTO users (username, email, password_hash, role)
        VALUES ($1, $2, $3, $4)
        RETURNING id, username, email, role`,
-      [username, email, hash, role]
+      [username, email, hash, "member"]
     );
 
     res.status(201).json({ message: "Account created successfully", user: result.rows[0] });

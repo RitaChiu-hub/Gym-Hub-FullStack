@@ -14,23 +14,23 @@ function LoginPage() {
     clearError();
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (mode === "register") {
       if (!/^[a-zA-Z]+$/.test(form.username)) { setLocalError("Username must contain letters only."); return; }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { setLocalError("Please enter a valid email address."); return; }
       if (form.password !== form.confirmPassword) { setLocalError("Passwords do not match."); return; }
       if (form.password.length < 6) { setLocalError("Password must be at least 6 characters."); return; }
-      register({ username: form.username, email: form.email, password: form.password, role: form.role });
-      if (!authError) {
-        setSuccessMsg("Account created! Please sign in with your email.");
-        setForm({ username: "", email: "", password: "", confirmPassword: "", role: "member" });
-        setMode("login");
-      }
-    } else {
-      login(form.email, form.password);
+        const ok = await register({ username: form.username, email: form.email, password: form.password });
+    if (ok) {
+      setSuccessMsg("Account created! Please sign in with your email.");
+      setForm({ username: "", email: "", password: "", confirmPassword: "", role: "member" });
+      setMode("login");
     }
-  };
+  } else {
+    login(form.email, form.password);
+  }
+};
 
   const switchMode = (next) => {
     setForm({ username: "", email: "", password: "", confirmPassword: "", role: "member" });
@@ -79,13 +79,6 @@ function LoginPage() {
               <div className="form-group">
                 <label htmlFor="confirmPassword">Confirm Password</label>
                 <input type="password" id="confirmPassword" name="confirmPassword" value={form.confirmPassword} onChange={update} placeholder="Re-enter your password" autoComplete="new-password" required />
-              </div>
-              <div className="form-group">
-                <label htmlFor="role">I am a...</label>
-                <select id="role" name="role" value={form.role} onChange={update} className="role-select">
-                  <option value="member">Member</option>
-                  <option value="trainer">Trainer</option>
-                </select>
               </div>
             </>
           )}
