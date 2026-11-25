@@ -8,11 +8,11 @@ export function fmtSchedule(isoDate, time) {
   const [y, mo, day] = isoDate.split("-").map(Number);
   const d = new Date(y, mo - 1, day);
   const [h, min] = time.split(":").map(Number);
-  const period  = h >= 12 ? "PM" : "AM";
-  const h12     = h % 12 || 12;
+  const period = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 || 12;
   const dayLabel = d.toLocaleDateString("en-US", { weekday: "short" });
   const monLabel = d.toLocaleDateString("en-US", { month: "short" });
-  return `${dayLabel}, ${monLabel} ${day} — ${h12}:${String(min).padStart(2,"0")} ${period}`;
+  return `${dayLabel}, ${monLabel} ${day} — ${h12}:${String(min).padStart(2, "0")} ${period}`;
 }
 
 export function ClassesProvider({ children }) {
@@ -30,18 +30,18 @@ export function ClassesProvider({ children }) {
     const timeStr = c.time ? c.time.slice(0, 5) : "";
     return {
       ...c,
-      date:         dateStr,
-      time:         timeStr,
-      schedule:     dateStr && timeStr ? fmtSchedule(dateStr, timeStr) : "",
-      enrolled:     [],
-      waitlist:     [],
-      attendance:   [],
+      date: dateStr,
+      time: timeStr,
+      schedule: dateStr && timeStr ? fmtSchedule(dateStr, timeStr) : "",
+      enrolled: [],
+      waitlist: [],
+      attendance: [],
       promotionLog: [],
       enrolledCount: Number(c.enrolled_count ?? 0),
-      waitlistCount: Number(c.waitlist_count  ?? 0),
-      userStatus:    c.user_status ?? null,
-      linkToPage:   "panels",
-      linkLabel:    "See Our Facilities →",
+      waitlistCount: Number(c.waitlist_count ?? 0),
+      userStatus: c.user_status ?? null,
+      linkToPage: "panels",
+      linkLabel: "See Our Facilities →",
     };
   }
 
@@ -49,7 +49,7 @@ export function ClassesProvider({ children }) {
   const fetchClasses = async () => {
     if (!token) return;
     try {
-      const res  = await fetch(`${API}/classes`, {
+      const res = await fetch(`${API}/classes`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -69,9 +69,9 @@ export function ClassesProvider({ children }) {
       const created = await Promise.all(
         newClasses.map((c) =>
           fetch(`${API}/classes`, {
-            method:  "POST",
+            method: "POST",
             headers: getHeaders(),
-            body:    JSON.stringify(c),
+            body: JSON.stringify(c),
           }).then((r) => r.json())
         )
       );
@@ -83,10 +83,10 @@ export function ClassesProvider({ children }) {
 
   const updateClass = async (updated) => {
     try {
-      const res  = await fetch(`${API}/classes/${updated.id}`, {
-        method:  "PUT",
+      const res = await fetch(`${API}/classes/${updated.id}`, {
+        method: "PUT",
         headers: getHeaders(),
-        body:    JSON.stringify(updated),
+        body: JSON.stringify(updated),
       });
       const data = await res.json();
       if (res.ok) {
@@ -101,20 +101,28 @@ export function ClassesProvider({ children }) {
 
   const deleteClass = async (classId) => {
     try {
-      await fetch(`${API}/classes/${classId}`, {
-        method:  "DELETE",
+      const res = await fetch(`${API}/classes/${classId}`, {
+        method: "DELETE",
         headers: getHeaders(),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        console.error("deleteClass failed:", data.error || res.status);
+        return false;
+      }
+      // Only remove from the UI after the server confirms the delete
       setClasses((prev) => prev.filter((c) => c.id !== classId));
+      return true;
     } catch (err) {
       console.error("deleteClass error:", err);
+      return false;
     }
   };
 
   const joinClass = async (classId, userId) => {
     try {
       const res = await fetch(`${API}/classes/${classId}/enroll`, {
-        method:  "POST",
+        method: "POST",
         headers: getHeaders(),
       });
       if (res.ok) await fetchClasses(); // Refresh class list
@@ -126,7 +134,7 @@ export function ClassesProvider({ children }) {
   const leaveClass = async (classId, userId) => {
     try {
       const res = await fetch(`${API}/classes/${classId}/enroll`, {
-        method:  "DELETE",
+        method: "DELETE",
         headers: getHeaders(),
       });
       if (res.ok) await fetchClasses();
@@ -138,7 +146,7 @@ export function ClassesProvider({ children }) {
   const removeMember = async (classId, uid) => {
     try {
       await fetch(`${API}/classes/${classId}/enroll`, {
-        method:  "DELETE",
+        method: "DELETE",
         headers: { ...getHeaders(), "x-target-user": uid },
       });
       await fetchClasses();
@@ -150,7 +158,7 @@ export function ClassesProvider({ children }) {
   const toggleAttendance = async (classId, uid) => {
     try {
       const res = await fetch(`${API}/classes/${classId}/attendance/${uid}`, {
-        method:  "POST",
+        method: "POST",
         headers: getHeaders(),
       });
       if (res.ok) await fetchClasses();

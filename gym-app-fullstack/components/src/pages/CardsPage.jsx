@@ -61,7 +61,7 @@ function ClassForm({ form, onChange, onSubmit, onCancel, submitLabel, showRepeat
       </div>
       <div className="form-row">
         <div className="form-group">
-          <label>Date</label>
+          <label>{showRepeat && repeatDays.length > 0 ? "Start Date" : "Date"}</label>
           <input type="date" name="date" value={form.date} onChange={onChange} required />
         </div>
         <div className="form-group">
@@ -87,7 +87,17 @@ function ClassForm({ form, onChange, onSubmit, onCancel, submitLabel, showRepeat
               <button key={d} type="button" className={`repeat-day-btn ${repeatDays.includes(d)?"repeat-day-btn--active":""}`} onClick={()=>onToggleDay(d)}>{d}</button>
             ))}
           </div>
-          <p className="repeat-hint">{repeatDays.length===0 ? "No repeat — single class only." : `Creates every ${repeatDays.join(", ")} from selected date (4 weeks).`}</p>
+         {repeatDays.length > 0 && (
+          <div className="form-group" style={{ marginTop: "0.75rem" }}>
+          <label>End Date</label>
+          <input type="date" name="endDate" value={form.endDate} onChange={onChange} min={form.date} required />
+         </div>
+        )}
+          <p className="repeat-hint">
+          {repeatDays.length === 0
+           ? "No repeat — single class only."
+           : `Creates every ${repeatDays.join(", ")} from the start date to the end date.`}
+          </p>
         </div>
       )}
       <div className="form-group">
@@ -103,17 +113,35 @@ function ClassForm({ form, onChange, onSubmit, onCancel, submitLabel, showRepeat
 }
 
 /* ── Helpers ── */
+const MAX_REPEAT_DAYS = 84; // repeating classes can span at most 12 weeks
+
+// Parse "YYYY-MM-DD" as a LOCAL date.
+// new Date("YYYY-MM-DD") treats the string as UTC midnight, which shifts the day in US time zones.
+function parseLocalDate(iso) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+// Format a Date as "YYYY-MM-DD" using local time (toISOString() would convert to UTC)
+function toISODate(d) {
+  const y   = d.getFullYear();
+  const m   = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 function buildClass(base, date, time) {
   return { ...base, date, time, schedule: fmtSchedule(date, time) };
 }
 
-function generateRecurring(base, startDate, time, repeatDays) {
-  if (repeatDays.length===0) return [buildClass(base, startDate, time)];
-  const results=[], start=new Date(startDate);
-  for (let i=0; i<28; i++) {
-    const d=new Date(start); d.setDate(start.getDate()+i);
-    const iso=d.toISOString().split("T")[0];
-    if (repeatDays.includes(WEEKDAYS[d.getDay()])) results.push(buildClass(base, iso, time));
+function generateRecurring(base, startDate, endDate, time, repeatDays) {
+  if (repeatDays.length === 0) return [buildClass(base, startDate, time)];
+  const results = [];
+  const end = parseLocalDate(endDate);
+  for (let d = parseLocalDate(startDate); d <= end; d.setDate(d.getDate() + 1)) {
+    if (repeatDays.includes(WEEKDAYS[d.getDay()])) {
+      results.push(buildClass(base, toISODate(d), time));
+    }
   }
   return results;
 }
@@ -122,18 +150,42 @@ function generateRecurring(base, startDate, time, repeatDays) {
 function CreateClassModal({ onClose }) {
   const { createClasses } = useClasses();
   const { user } = useAuth();
-  const [form, setForm] = useState({ title:"", date:"", time:"", level:"beginner", description:"", capacity:10 });
-  const [repeatDays, setRepeat] = useState([]);
-  const update = e => setForm(f=>({...f,[e.target.name]:e.target.value}));
+  const [form, setForm] = useState({ title:"", date:"", endDate:"", time:"", level:"beginner", description:"", capacity:10 });
+  const [repeatDays, setRepeat]     = useState([]);
+  const [formError, setFormError]   = useState("");
+  const update = e => { setForm(f => ({ ...f, [e.target.name]: e.target.value })); setFormError(""); };
+
   const handleSubmit = e => {
     e.preventDefault();
+
+    if (repeatDays.length > 0) {
+      if (!form.endDate || form.endDate < form.date) {
+        setFormError("End date must be on or after the start date.");
+        return;
+      }
+      const spanDays = (parseLocalDate(form.endDate) - parseLocalDate(form.date)) / 86400000;
+      if (spanDays > MAX_REPEAT_DAYS) {
+        setFormError("Repeating classes can span at most 12 weeks.");
+        return;
+      }
+    }
+
     const base = { title:form.title, description:form.description, level:form.level, capacity:Number(form.capacity), trainerName:user.username };
-    createClasses(generateRecurring(base, form.date, form.time, repeatDays));
+    const newClasses = generateRecurring(base, form.date, form.endDate, form.time, repeatDays);
+
+    if (newClasses.length === 0) {
+      setFormError("No class falls on the selected days in this date range.");
+      return;
+    }
+
+    createClasses(newClasses);
     onClose();
   };
+
   return (
     <div className="modal-overlay"><div className="create-class-modal">
       <h2 className="dialog-title">Create New Class</h2>
+      {formError && <p className="login-error" role="alert">{formError}</p>}
       <ClassForm form={form} onChange={update} onSubmit={handleSubmit} onCancel={onClose}
         submitLabel={`Create Class${repeatDays.length>0?"es":""}`}
         showRepeat repeatDays={repeatDays}
