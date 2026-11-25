@@ -65,8 +65,12 @@ function ClassForm({ form, onChange, onSubmit, onCancel, submitLabel, showRepeat
           <input type="date" name="date" value={form.date} onChange={onChange} required />
         </div>
         <div className="form-group">
-          <label>Time</label>
-          <input type="time" name="time" value={form.time} onChange={onChange} required />
+          <label>Start Time</label>
+          <input type="time" name="start_time" value={form.start_time} onChange={onChange} required />
+        </div>
+        <div className="form-group">
+          <label>End Time</label>
+          <input type="time" name="end_time" value={form.end_time} onChange={onChange} required />
         </div>
       </div>
       <div className="form-row">
@@ -130,17 +134,17 @@ function toISODate(d) {
   return `${y}-${m}-${day}`;
 }
 
-function buildClass(base, date, time) {
-  return { ...base, date, time, schedule: fmtSchedule(date, time) };
+function buildClass(base, date) {
+  return { ...base, date, schedule: fmtSchedule(date, base.start_time, base.end_time) };
 }
 
-function generateRecurring(base, startDate, endDate, time, repeatDays) {
-  if (repeatDays.length === 0) return [buildClass(base, startDate, time)];
+function generateRecurring(base, startDate, endDate, repeatDays) {
+  if (repeatDays.length === 0) return [buildClass(base, startDate)];
   const results = [];
   const end = parseLocalDate(endDate);
   for (let d = parseLocalDate(startDate); d <= end; d.setDate(d.getDate() + 1)) {
     if (repeatDays.includes(WEEKDAYS[d.getDay()])) {
-      results.push(buildClass(base, toISODate(d), time));
+      results.push(buildClass(base, toISODate(d)));
     }
   }
   return results;
@@ -150,13 +154,18 @@ function generateRecurring(base, startDate, endDate, time, repeatDays) {
 function CreateClassModal({ onClose }) {
   const { createClasses } = useClasses();
   const { user } = useAuth();
-  const [form, setForm] = useState({ title:"", date:"", endDate:"", time:"", level:"beginner", description:"", capacity:10 });
-  const [repeatDays, setRepeat]     = useState([]);
-  const [formError, setFormError]   = useState("");
+  const [form, setForm] = useState({ title:"", date:"", endDate:"", start_time:"", end_time:"", level:"beginner", description:"", capacity:10 });
+  const [repeatDays, setRepeat]   = useState([]);
+  const [formError, setFormError] = useState("");
   const update = e => { setForm(f => ({ ...f, [e.target.name]: e.target.value })); setFormError(""); };
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
+
+    if (form.end_time <= form.start_time) {
+      setFormError("End time must be later than start time.");
+      return;
+    }
 
     if (repeatDays.length > 0) {
       if (!form.endDate || form.endDate < form.date) {
@@ -170,15 +179,23 @@ function CreateClassModal({ onClose }) {
       }
     }
 
-    const base = { title:form.title, description:form.description, level:form.level, capacity:Number(form.capacity), trainerName:user.username };
-    const newClasses = generateRecurring(base, form.date, form.endDate, form.time, repeatDays);
+    const base = {
+      title: form.title, description: form.description, level: form.level,
+      capacity: Number(form.capacity), trainerName: user.username,
+      start_time: form.start_time, end_time: form.end_time,
+    };
+    const newClasses = generateRecurring(base, form.date, form.endDate, repeatDays);
 
     if (newClasses.length === 0) {
       setFormError("No class falls on the selected days in this date range.");
       return;
     }
 
-    createClasses(newClasses);
+    const ok = await createClasses(newClasses);
+    if (!ok) {
+      setFormError("Some classes could not be created. Please check the details and try again.");
+      return;
+    }
     onClose();
   };
 
@@ -196,18 +213,41 @@ function CreateClassModal({ onClose }) {
 
 function EditClassModal({ gymClass, onClose }) {
   const { updateClass } = useClasses();
-  const [form, setForm] = useState({ title:gymClass.title, date:"", time:"", level:gymClass.level||"beginner", description:gymClass.description, capacity:gymClass.capacity });
-  const update = e => setForm(f=>({...f,[e.target.name]:e.target.value}));
+  const [form, setForm] = useState({
+    title:       gymClass.title,
+    date:        gymClass.date,
+    start_time:  gymClass.start_time,
+    end_time:    gymClass.end_time,
+    level:       gymClass.level || "beginner",
+    description: gymClass.description,
+    capacity:    gymClass.capacity,
+  });
+  const [formError, setFormError] = useState("");
+  const update = e => { setForm(f => ({ ...f, [e.target.name]: e.target.value })); setFormError(""); };
+
   const handleSubmit = e => {
     e.preventDefault();
-    const date = form.date || gymClass.date;
-    const time = form.time || gymClass.time;
-    updateClass({ ...gymClass, title:form.title, level:form.level, description:form.description, capacity:Number(form.capacity), date, time, schedule: date&&time ? fmtSchedule(date,time) : gymClass.schedule });
+    if (form.end_time <= form.start_time) {
+      setFormError("End time must be later than start time.");
+      return;
+    }
+    updateClass({
+      ...gymClass,
+      title:       form.title,
+      level:       form.level,
+      description: form.description,
+      capacity:    Number(form.capacity),
+      date:        form.date,
+      start_time:  form.start_time,
+      end_time:    form.end_time,
+    });
     onClose();
   };
+
   return (
     <div className="modal-overlay"><div className="create-class-modal">
       <h2 className="dialog-title">Edit Class</h2>
+      {formError && <p className="login-error" role="alert">{formError}</p>}
       <ClassForm form={form} onChange={update} onSubmit={handleSubmit} onCancel={onClose} submitLabel="Save Changes" />
     </div></div>
   );
@@ -432,7 +472,7 @@ function MonthCalendar({ filterFn, emptyMsg="No classes this day." }) {
                 </div>
                 {getTerm(c.date) && <span className="cal-class-term">{getTerm(c.date)}</span>}
                 {c.trainer_name && <span className="cal-class-trainer">👤 {c.trainer_name}</span>}
-                {c.time && <span className="cal-class-time">🕐 {formatTime(c.time)}</span>}
+                {c.start_time && <span className="cal-class-time">🕐 {formatTime(c.start_time)}{c.end_time && ` – ${formatTime(c.end_time)}`}</span>}
                 <span className="cal-class-enrolled">👥 {c.enrolledCount} / {c.capacity} enrolled</span>
               </div>
             ))

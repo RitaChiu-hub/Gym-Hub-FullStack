@@ -1,6 +1,23 @@
 const pool = require("../db");
 const { getEnrollmentStatus } = require("../utils/enrollment");
 
+
+/* ── Validate class fields (shared by create and update) ── */
+function validateClassInput({ title, date, start_time, end_time, capacity }) {
+  if (!title || !date || !start_time || !end_time || capacity === undefined || capacity === "") {
+    return "title, date, start_time, end_time and capacity are required";
+  }
+  // "HH:MM" strings compare correctly as text, e.g. "09:30" < "10:00"
+  if (end_time.slice(0, 5) <= start_time.slice(0, 5)) {
+    return "End time must be later than start time";
+  }
+  const cap = Number(capacity);
+  if (!Number.isInteger(cap) || cap < 1) {
+    return "Capacity must be a whole number of at least 1";
+  }
+  return null;
+}
+
 /* ── Get all classes ── */
 async function getAllClasses(req, res) {
   const userId = req.user.id;
@@ -13,7 +30,7 @@ async function getAllClasses(req, res) {
        FROM classes c
        LEFT JOIN enrollments e ON c.id = e.class_id
        GROUP BY c.id
-       ORDER BY c.date, c.time`,
+       ORDER BY c.date, c.start_time`,
       [userId]
     );
     res.json(result.rows);
@@ -25,20 +42,21 @@ async function getAllClasses(req, res) {
 
 /* ── Create class (trainer only) ── */
 async function createClass(req, res) {
-  const { title, description, level, date, time, capacity } = req.body;
+  const { title, description, level, date, start_time, end_time, capacity } = req.body;
   const trainerName = req.user.username;
   const trainerId   = req.user.id;
 
-  if (!title || !date || !time || !capacity) {
-    return res.status(400).json({ error: "title, date, time, capacity are required" });
+  const error = validateClassInput(req.body);
+  if (error) {
+    return res.status(400).json({ error });
   }
 
   try {
     const result = await pool.query(
-      `INSERT INTO classes (title, description, level, date, time, capacity, trainer_name, trainer_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO classes (title, description, level, date, start_time, end_time, capacity, trainer_name, trainer_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [title, description, level, date, time, capacity, trainerName, trainerId]
+      [title, description, level, date, start_time, end_time, capacity, trainerName, trainerId]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -50,15 +68,20 @@ async function createClass(req, res) {
 /* ── Update class (trainer only) ── */
 async function updateClass(req, res) {
   const { id } = req.params;
-  const { title, description, level, date, time, capacity } = req.body;
+  const { title, description, level, date, start_time, end_time, capacity } = req.body;
+
+  const error = validateClassInput(req.body);
+  if (error) {
+    return res.status(400).json({ error });
+  }
 
   try {
     const result = await pool.query(
       `UPDATE classes
-       SET title=$1, description=$2, level=$3, date=$4, time=$5, capacity=$6
-       WHERE id=$7 AND trainer_id=$8
+       SET title=$1, description=$2, level=$3, date=$4, start_time=$5, end_time=$6, capacity=$7
+       WHERE id=$8 AND trainer_id=$9
        RETURNING *`,
-      [title, description, level, date, time, capacity, id, req.user.id]
+      [title, description, level, date, start_time, end_time, capacity, id, req.user.id]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Class not found or unauthorized" });
