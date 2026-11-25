@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useClasses } from "../context/ClassesContext";
+import UserRoleManager from "../component/UserRoleManager";
 
 const API = "http://localhost:3000/api";
 
@@ -375,6 +376,7 @@ function ProfilePage() {
 
       {/* ✅ 新增：Admin Dashboard 卡片（只有 admin 看得到）*/}
       {user.role === "admin" && <AdminDashboardCard token={token} />}
+      {user.role === "admin" && <UserRoleManager token={token} currentUserId={user.id} />}
 
       {/* Class History */}
       {user.role === "member"  && <ClassHistory />}
