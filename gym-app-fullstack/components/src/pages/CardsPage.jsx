@@ -264,7 +264,7 @@ function MembersModal({ gymClass, onClose }) {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(r => r.json())
-      .then(setMembers)
+      .then(data => setMembers(Array.isArray(data) ? data : []))
       .catch(console.error);
   }, [gymClass.id]);
 
@@ -273,9 +273,10 @@ function MembersModal({ gymClass, onClose }) {
     const res = await fetch(`${API}/classes/${gymClass.id}/members`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    setMembers(await res.json());
+    const data = await res.json();
+    setMembers(Array.isArray(data) ? data : []);
   };
-
+  
   const handleRemove = async (uid) => {
     await removeMember(gymClass.id, uid);
     setMembers(prev => prev.filter(m => m.id !== uid));

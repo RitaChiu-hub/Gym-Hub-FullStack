@@ -222,10 +222,24 @@ async function leaveClass(req, res) {
   }
 }
 
+/* ── Check that the logged-in trainer owns this class ── */
+async function isClassOwner(classId, trainerId) {
+  const result = await pool.query(
+    "SELECT id FROM classes WHERE id=$1 AND trainer_id=$2",
+    [classId, trainerId]
+  );
+  return result.rows.length > 0;
+}
+
 /* ── Get members (trainer only) ── */
 async function getMembers(req, res) {
   const classId = req.params.id;
   try {
+    // Only the trainer who owns this class may see its members
+    if (!(await isClassOwner(classId, req.user.id))) {
+      return res.status(404).json({ error: "Class not found or unauthorized" });
+    }
+
     const result = await pool.query(
       `SELECT u.id, u.username, u.email, e.status, e.joined_at,
         EXISTS (
@@ -249,6 +263,11 @@ async function getMembers(req, res) {
 async function markAttendance(req, res) {
   const { id: classId, userId } = req.params;
   try {
+    // Only the trainer who owns this class may change its attendance
+    if (!(await isClassOwner(classId, req.user.id))) {
+      return res.status(404).json({ error: "Class not found or unauthorized" });
+    }
+
     const existing = await pool.query(
       "SELECT id FROM attendance WHERE user_id=$1 AND class_id=$2",
       [userId, classId]
@@ -261,6 +280,15 @@ async function markAttendance(req, res) {
         [userId, classId]
       );
       return res.json({ attended: false });
+    }
+
+    // Only members with an enrolled spot can be marked as attended
+    const enrolled = await pool.query(
+      "SELECT id FROM enrollments WHERE user_id=$1 AND class_id=$2 AND status='enrolled'",
+      [userId, classId]
+    );
+    if (enrolled.rows.length === 0) {
+      return res.status(400).json({ error: "User is not enrolled in this class" });
     }
 
     // Mark attended
