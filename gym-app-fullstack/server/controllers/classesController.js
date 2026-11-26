@@ -111,85 +111,114 @@ async function deleteClass(req, res) {
   }
 }
 
-/* ── Enroll in class ── */
+/* ── Enroll in class ──
+   Runs in a transaction and locks the class row (FOR UPDATE), so two members
+   racing for the last spot are handled one after the other instead of both
+   being counted as "enrolled". */
 async function enrollClass(req, res) {
   const classId = req.params.id;
   const userId  = req.user.id;
+  const client  = await pool.connect();          // Dedicated connection: a transaction must stay on one client
 
   try {
+    await client.query("BEGIN");                 // Start transaction
+
+    const cls = await client.query(
+      "SELECT capacity FROM classes WHERE id=$1 FOR UPDATE",   // Lock this class row until COMMIT/ROLLBACK
+      [classId]
+    );
+    if (cls.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Class not found" });
+    }
+
     // Check already enrolled or waitlisted
-    const existing = await pool.query(
+    const existing = await client.query(
       "SELECT id FROM enrollments WHERE user_id=$1 AND class_id=$2",
       [userId, classId]
     );
     if (existing.rows.length > 0) {
+      await client.query("ROLLBACK");
       return res.status(409).json({ error: "Already enrolled or on waitlist" });
     }
 
-    // Check capacity
-    const cls = await pool.query("SELECT capacity FROM classes WHERE id=$1", [classId]);
-    if (cls.rows.length === 0) return res.status(404).json({ error: "Class not found" });
-
-    const enrolled = await pool.query(
+    // Count is safe to trust here: no one else can change this class while we hold the lock
+    const enrolled = await client.query(
       "SELECT COUNT(*) FROM enrollments WHERE class_id=$1 AND status='enrolled'",
       [classId]
     );
-    const count  = parseInt(enrolled.rows[0].count);
+    const count  = parseInt(enrolled.rows[0].count, 10);
     const status = getEnrollmentStatus(count, cls.rows[0].capacity);
 
-    await pool.query(
+    await client.query(
       "INSERT INTO enrollments (user_id, class_id, status) VALUES ($1, $2, $3)",
       [userId, classId, status]
     );
+    await client.query("COMMIT");                // Save changes and release the lock
 
     res.status(201).json({ message: `Successfully ${status}`, status });
   } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});   // Undo everything on error
     console.error("enrollClass error:", err.message);
     res.status(500).json({ error: "Server error" });
+  } finally {
+    client.release();                            // Always return the connection to the pool
   }
 }
 
-/* ── Leave class ── */
+/* ── Leave class ──
+   Removing the member and promoting the next person on the waitlist happen
+   in one transaction, under the same class-row lock as enrollClass. */
 async function leaveClass(req, res) {
   const classId = req.params.id;
   const userId  = req.user.id;
+  const client  = await pool.connect();          // Dedicated connection: a transaction must stay on one client
 
   try {
-    const enrollment = await pool.query(
+    await client.query("BEGIN");                 // Start transaction
+    await client.query("SELECT id FROM classes WHERE id=$1 FOR UPDATE", [classId]);   // Same lock as enrollClass
+
+    const enrollment = await client.query(
       "SELECT * FROM enrollments WHERE user_id=$1 AND class_id=$2",
       [userId, classId]
     );
     if (enrollment.rows.length === 0) {
+      await client.query("ROLLBACK");
       return res.status(404).json({ error: "Enrollment not found" });
     }
 
     const wasEnrolled = enrollment.rows[0].status === "enrolled";
 
-    await pool.query(
+    await client.query(
       "DELETE FROM enrollments WHERE user_id=$1 AND class_id=$2",
       [userId, classId]
     );
 
     // Auto-promote first waitlist member if someone leaves enrolled spot
     if (wasEnrolled) {
-      const next = await pool.query(
+      const next = await client.query(
         `SELECT id FROM enrollments
          WHERE class_id=$1 AND status='waitlist'
-         ORDER BY joined_at ASC LIMIT 1`,
+         ORDER BY joined_at ASC, id ASC LIMIT 1`,
         [classId]
       );
       if (next.rows.length > 0) {
-        await pool.query(
+        await client.query(
           "UPDATE enrollments SET status='enrolled' WHERE id=$1",
           [next.rows[0].id]
         );
       }
     }
 
+    await client.query("COMMIT");                // Delete + promotion are saved together
+
     res.json({ message: "Left class successfully" });
   } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});   // Undo everything on error
     console.error("leaveClass error:", err.message);
     res.status(500).json({ error: "Server error" });
+  } finally {
+    client.release();                            // Always return the connection to the pool
   }
 }
 
