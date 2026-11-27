@@ -68,9 +68,15 @@ async function login(req, res) {
       { expiresIn: "7d" }
     );
 
-    res.json({
+        res.json({
       token,
-      user: { id: user.id, username: user.username, email: user.email, role: user.role },
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        created_at: user.created_at,
+      },
     });
   } catch (err) {
     console.error("Login error:", err.message);

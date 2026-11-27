@@ -347,9 +347,9 @@ function ProfilePage() {
               </div>
             )}
           </div>
-          {/* ✅ 修正：Role 顯示也加入 admin */}
+          {/* Role label covers member, trainer and admin */}
           <div className="info-row"><span className="info-label">Role</span><span className="info-value">{roleLabel(user.role)}</span></div>
-          <div className="info-row"><span className="info-label">Member since</span><span className="info-value">{new Date(user.created_at || user.id).toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"})}</span></div>
+          <div className="info-row"><span className="info-label">Member since</span><span className="info-value">{user.created_at ? new Date(user.created_at).toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"}) : "—"}</span></div>
         </div>
       </section>
 
