@@ -51,11 +51,6 @@ function LoginPage() {
           {mode === "login" ? "Sign in to your account" : "Create a new account"}
         </p>
 
-        <div className="auth-tabs">
-          <button className={`auth-tab ${mode === "login" ? "auth-tab--active" : ""}`} onClick={() => switchMode("login")} type="button">Sign In</button>
-          <button className={`auth-tab ${mode === "register" ? "auth-tab--active" : ""}`} onClick={() => switchMode("register")} type="button">Register</button>
-        </div>
-
         <form className="login-form" onSubmit={handleSubmit}>
           {mode === "register" && (
             <div className="form-group">
@@ -90,6 +85,16 @@ function LoginPage() {
             {mode === "login" ? "Sign In" : "Create Account"}
           </button>
         </form>
+        <p className="auth-switch">
+          {mode === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
+          <button
+            type="button"
+            className="auth-switch-link"
+            onClick={() => switchMode(mode === "login" ? "register" : "login")}
+          >
+            {mode === "login" ? "Register" : "Sign In"}
+          </button>
+        </p>
       </div>
     </div>
   );
