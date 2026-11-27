@@ -10,7 +10,7 @@ function TextPage({ setCurrentPage }) {
       <section className="about-intro">
         <h2>About IronPeak Gym</h2>
         <p>
-          Founded in 2010, IronPeak Gym has been Boston's premier fitness destination for over a
+          Founded in 2026, IronPeak Gym has been Boston's premier fitness destination for over a
           decade. We believe that fitness is not just a habit — it's a lifestyle. Our state-of-the-art
           facility is designed to help you reach your goals, whether you're a beginner or a seasoned athlete.
         </p>
