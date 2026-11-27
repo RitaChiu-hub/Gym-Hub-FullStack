@@ -1,5 +1,7 @@
 # 🏋️ IronPeak Gym Web App
 
+https://github.com/user-attachments/assets/686ef99b-f963-4e1c-82b1-21415ef391a3
+
 # Overview
 This application provides a centralized platform for gym members and trainers to connect and manage fitness classes more efficiently. Traditional gym scheduling is often handled through paper sign-up sheets or manual messaging, making it hard to track availability or manage waitlists. This project aims to solve that problem by providing a dedicated website where anyone can browse upcoming classes, enroll, and manage their participation — while giving trainers full control over class creation and attendance.
 
