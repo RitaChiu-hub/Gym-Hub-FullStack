@@ -361,24 +361,27 @@ function DeleteConfirm({ gymClass, onClose }) {
 }
 
 /* ── Trainer card ── */
-function TrainerCard({ gymClass, setCurrentPage, onEdit, onDelete, onViewMembers }) {
+function TrainerCard({ gymClass, isOwner, setCurrentPage, onEdit, onDelete, onViewMembers }) {
   return (
     <article className="class-card class-card--animated">
       <div className="card-top-row">
         <h3 className="card-title">{gymClass.title}</h3>
-        <div className="trainer-card-actions">
-          <button className="icon-btn" onClick={()=>onEdit(gymClass)}>✏️</button>
-          <button className="icon-btn" onClick={()=>onDelete(gymClass)}>🗑️</button>
-        </div>
+                {isOwner && (
+          <div className="trainer-card-actions">
+            <button className="icon-btn" onClick={()=>onEdit(gymClass)}>✏️</button>
+            <button className="icon-btn" onClick={()=>onDelete(gymClass)}>🗑️</button>
+          </div>
+        )}
       </div>
       <LevelBadge level={gymClass.level} />
       {getTerm(gymClass.date) && <span className="card-term">{getTerm(gymClass.date)}</span>}
+      {!isOwner && gymClass.trainer_name && <p className="card-trainer-name">👤 {gymClass.trainer_name}</p>}
       <p className="card-description">{gymClass.description}</p>
       <p className="card-schedule"><strong>Schedule:</strong> {gymClass.schedule}</p>
       <CapacityBar enrolled={gymClass.enrolledCount} capacity={gymClass.capacity} waitlist={gymClass.waitlistCount} />
-      {gymClass.enrolledCount>0 && <p className="card-attendance-hint">☑ attendance tracked</p>}
+            {isOwner && gymClass.enrolledCount>0 && <p className="card-attendance-hint">☑ attendance tracked</p>}
       <div className="card-actions">
-        <Button type="button" visual="button" onClick={()=>onViewMembers(gymClass)}>View Members</Button>
+        {isOwner && <Button type="button" visual="button" onClick={()=>onViewMembers(gymClass)}>View Members</Button>}
         {gymClass.linkToPage && <button className="btn-link" onClick={()=>setCurrentPage(gymClass.linkToPage)}>{gymClass.linkLabel}</button>}
       </div>
     </article>
@@ -548,7 +551,7 @@ function CardsPage({ setCurrentPage }) {
       </div>
 
       {isTrainer && calView && (
-        <MonthCalendar filterFn={c=>c.trainer_name===user.username} emptyMsg="You have no classes scheduled this day." />
+        <MonthCalendar filterFn={c=>c.trainer_id===user.id} emptyMsg="You have no classes scheduled this day." />
       )}
 
       {!isTrainer && (
@@ -597,7 +600,7 @@ function CardsPage({ setCurrentPage }) {
               {visible.map(gymClass=>(
                 <li key={gymClass.id}>
                   {isTrainer
-                    ? <TrainerCard gymClass={gymClass} setCurrentPage={setCurrentPage} onEdit={setEditTarget} onDelete={setDeleteTarget} onViewMembers={setMembersTarget} />
+                    ? <TrainerCard gymClass={gymClass} isOwner={gymClass.trainer_id===user.id} setCurrentPage={setCurrentPage} onEdit={setEditTarget} onDelete={setDeleteTarget} onViewMembers={setMembersTarget} />
                     : <MemberCard  gymClass={gymClass} setCurrentPage={setCurrentPage} />}
                 </li>
               ))}
