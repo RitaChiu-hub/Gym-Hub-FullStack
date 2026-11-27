@@ -156,18 +156,22 @@ export function ClassesProvider({ children }) {
     }
   };
 
+    // Returns true only if the server actually removed the member
   const removeMember = async (classId, uid) => {
     try {
-      await fetch(`${API}/classes/${classId}/enroll`, {
+      const res = await fetch(`${API}/classes/${classId}/members/${uid}`, {
         method: "DELETE",
-        headers: { ...getHeaders(), "x-target-user": uid },
+        headers: getHeaders(),
       });
+      if (!res.ok) return false;
       await fetchClasses();
+      return true;
     } catch (err) {
       console.error("removeMember error:", err);
+      return false;
     }
   };
-
+  
   const toggleAttendance = async (classId, uid) => {
     try {
       const res = await fetch(`${API}/classes/${classId}/attendance/${uid}`, {

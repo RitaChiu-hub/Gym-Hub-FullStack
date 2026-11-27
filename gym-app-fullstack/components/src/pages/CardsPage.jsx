@@ -255,7 +255,7 @@ function EditClassModal({ gymClass, onClose }) {
 
 function MembersModal({ gymClass, onClose }) {
   const { token } = useAuth();
-  const { toggleAttendance, removeMember, fetchClasses } = useClasses();
+  const { toggleAttendance, removeMember } = useClasses();
   const [members, setMembers] = useState([]);
   const [tab, setTab] = useState("members");
 
@@ -276,11 +276,19 @@ function MembersModal({ gymClass, onClose }) {
     const data = await res.json();
     setMembers(Array.isArray(data) ? data : []);
   };
-  
-  const handleRemove = async (uid) => {
-    await removeMember(gymClass.id, uid);
-    setMembers(prev => prev.filter(m => m.id !== uid));
-    fetchClasses();
+
+    const handleRemove = async (uid) => {
+    const ok = await removeMember(gymClass.id, uid);
+    if (!ok) {
+      alert("Could not remove this member. Please try again.");
+      return;
+    }
+    // Reload from the server: a waitlisted member may have been promoted
+    const res = await fetch(`${API}/classes/${gymClass.id}/members`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    setMembers(Array.isArray(data) ? data : []);
   };
 
   const enrolled  = members.filter(m => m.status === "enrolled");

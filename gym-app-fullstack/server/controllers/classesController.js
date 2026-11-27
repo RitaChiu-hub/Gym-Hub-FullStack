@@ -166,6 +166,24 @@ async function enrollClass(req, res) {
   }
 }
 
+/* ── Promote the first waitlisted member to enrolled ──
+   Must be called inside a transaction that holds the class-row lock.
+   Shared by leaveClass and removeMember. */
+async function promoteFromWaitlist(client, classId) {
+  const next = await client.query(
+    `SELECT id FROM enrollments
+     WHERE class_id=$1 AND status='waitlist'
+     ORDER BY joined_at ASC, id ASC LIMIT 1`,
+    [classId]
+  );
+  if (next.rows.length > 0) {
+    await client.query(
+      "UPDATE enrollments SET status='enrolled' WHERE id=$1",
+      [next.rows[0].id]
+    );
+  }
+}
+
 /* ── Leave class ──
    Removing the member and promoting the next person on the waitlist happen
    in one transaction, under the same class-row lock as enrollClass. */
@@ -196,18 +214,7 @@ async function leaveClass(req, res) {
 
     // Auto-promote first waitlist member if someone leaves enrolled spot
     if (wasEnrolled) {
-      const next = await client.query(
-        `SELECT id FROM enrollments
-         WHERE class_id=$1 AND status='waitlist'
-         ORDER BY joined_at ASC, id ASC LIMIT 1`,
-        [classId]
-      );
-      if (next.rows.length > 0) {
-        await client.query(
-          "UPDATE enrollments SET status='enrolled' WHERE id=$1",
-          [next.rows[0].id]
-        );
-      }
+      await promoteFromWaitlist(client, classId);
     }
 
     await client.query("COMMIT");                // Delete + promotion are saved together
@@ -303,6 +310,60 @@ async function markAttendance(req, res) {
   }
 }
 
+
+/* ── Remove a member from a class (trainer only) ──
+   The trainer is identified by the token (req.user.id) and must own the class.
+   The member to remove comes from the URL (req.params.userId). */
+async function removeMember(req, res) {
+  const { id: classId, userId } = req.params;
+  const client = await pool.connect();          // Dedicated connection: a transaction must stay on one client
+
+  try {
+    await client.query("BEGIN");                 // Start transaction
+
+    // Ownership check and class-row lock in one query
+    const cls = await client.query(
+      "SELECT id FROM classes WHERE id=$1 AND trainer_id=$2 FOR UPDATE",
+      [classId, req.user.id]
+    );
+    if (cls.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Class not found or unauthorized" });
+    }
+
+    const enrollment = await client.query(
+      "SELECT status FROM enrollments WHERE user_id=$1 AND class_id=$2",
+      [userId, classId]
+    );
+    if (enrollment.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Member not found in this class" });
+    }
+
+    const wasEnrolled = enrollment.rows[0].status === "enrolled";
+
+    await client.query(
+      "DELETE FROM enrollments WHERE user_id=$1 AND class_id=$2",
+      [userId, classId]
+    );
+
+    // Removing an enrolled member frees a spot for the waitlist
+    if (wasEnrolled) {
+      await promoteFromWaitlist(client, classId);
+    }
+
+    await client.query("COMMIT");                // Delete + promotion are saved together
+
+    res.json({ message: "Member removed" });
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});   // Undo everything on error
+    console.error("removeMember error:", err.message);
+    res.status(500).json({ error: "Server error" });
+  } finally {
+    client.release();                            // Always return the connection to the pool
+  }
+}
+
 module.exports = {
   getAllClasses,
   createClass,
@@ -312,4 +373,5 @@ module.exports = {
   leaveClass,
   getMembers,
   markAttendance,
+  removeMember,
 };

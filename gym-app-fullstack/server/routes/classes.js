@@ -10,6 +10,7 @@ const {
   leaveClass,
   getMembers,
   markAttendance,
+  removeMember,
 } = require("../controllers/classesController");
 
 // Public (need to be logged in)
@@ -21,6 +22,7 @@ router.put("/:id", verifyToken, requireTrainer, updateClass);
 router.delete("/:id", verifyToken, requireTrainer, deleteClass);
 router.get("/:id/members", verifyToken, requireTrainer, getMembers);
 router.post("/:id/attendance/:userId", verifyToken, requireTrainer, markAttendance);
+router.delete("/:id/members/:userId", verifyToken, requireTrainer, removeMember);
 
 // Member
 router.post("/:id/enroll", verifyToken, enrollClass);
